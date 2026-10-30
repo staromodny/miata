@@ -10,9 +10,11 @@
 #include <string>
 #include <map>
 
+#include "utils/message_box.hpp"
+#include "utils/errors.hpp"
+
 #include "valve/player_pawn.hpp"
 #include "memory/memory.hpp"
-#include "utils/utils.hpp"
 #include "d3d/device.hpp"
 
 #include "main.hpp"
@@ -269,7 +271,7 @@ int WINAPI WinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 
     if (!RegisterClass(&wc)) {
-        return utils::show_last_error(L"RegisterClass");
+        return show_last_error(L"RegisterClass");
     }
 
     // Step 2: Create the window
@@ -283,7 +285,7 @@ int WINAPI WinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance
     );
 
     if (!hwnd) {
-        return utils::show_last_error(L"CreateWindowEx");
+        return show_last_error(L"CreateWindowEx");
     }
 
     const auto device = std::make_unique<c_d3d_device>(hwnd, static_cast<bool>(g_config.vertical_sync));
@@ -293,7 +295,7 @@ int WINAPI WinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance
 
     if (g_config.hide_from_recording == 1) {
         if (const auto result = SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE); !result) { // introduced in windows 10 2004
-            std::ignore = utils::show_last_error(L"SetWindowDisplayAffinity"); // not a critical failure.
+            std::ignore = show_last_error(L"SetWindowDisplayAffinity"); // not a critical failure.
         }
     }
 
