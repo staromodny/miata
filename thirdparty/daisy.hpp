@@ -15,6 +15,7 @@
 #include <atomic>        // std::atomic
 #include <memory>        // std::unique_ptr, std::make_unique
 #include <cstdint>       // uint/int types, fabsf, fmodf, sinf, cosf, floorf
+#include <cmath>
 namespace stl = std;
 #endif // DAISY_NO_STL
 
