@@ -20,7 +20,7 @@ bool c_d3d_device::initialize(const int& width, const int& height) {
 	m_params.BackBufferHeight = height;
 	m_params.EnableAutoDepthStencil = TRUE;
 	m_params.AutoDepthStencilFormat = D3DFMT_D16;
-	m_params.PresentationInterval = m_vsync ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIAT
+	m_params.PresentationInterval = m_vsync ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
 
 	HRESULT res = m_d3d->CreateDevice(
 		D3DADAPTER_DEFAULT,
