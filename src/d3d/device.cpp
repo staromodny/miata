@@ -51,12 +51,12 @@ bool c_d3d_device::initialize(const int& width, const int& height) {
 	return true;
 }
 
-bool c_d3d_device::begin_rendering() {
+bool c_d3d_device::begin_rendering() const noexcept {
 	m_device->Clear(0, nullptr, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_RGBA(0, 0, 0, 255), 1.0f, 0);
 	return m_device->BeginScene() == D3D_OK;
 }
 
-void c_d3d_device::end_rendering() {
+void c_d3d_device::end_rendering() const noexcept {
 	m_device->EndScene();
 	m_device->Present(nullptr, nullptr, nullptr, nullptr);
 }

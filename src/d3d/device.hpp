@@ -4,7 +4,6 @@
 #include <wrl/client.h>
 
 #include <d3d9.h>
-#include <memory>
 
 class c_d3d_device {
 public:
@@ -15,9 +14,9 @@ public:
     bool initialize(const int& width, const int& height);
 
     [[nodiscard]]
-    bool begin_rendering();
+    bool begin_rendering() const noexcept;
     
-    void end_rendering();
+    void end_rendering() const noexcept;
 
     const auto& get() noexcept {
         return this->m_device;
@@ -28,5 +27,5 @@ private:
     Microsoft::WRL::ComPtr<IDirect3DDevice9> m_device{};
 
 	bool m_vsync{ false };
-	HWND m_hwnd{ 0 };
+	HWND m_hwnd{ nullptr };
 };
