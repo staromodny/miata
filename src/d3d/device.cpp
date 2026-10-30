@@ -41,7 +41,7 @@ bool c_d3d_device::initialize(const int& width, const int& height) {
 	}
 
 	if (FAILED(res)) {
-		show_message_box<wchar_t>(L"Failed to create D3D device.", L"", buttons::OK | icons::Error, m_hwnd);
+		show_message_box<wchar_t>(L"Failed to create D3D9 device.", L"", buttons::OK | icons::Error, m_hwnd);
 		return false;
 	}
 
