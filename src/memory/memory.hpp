@@ -26,19 +26,19 @@ public:
 
 class c_game : public c_memory {
 public:
-    c_game() : m_process_handle(nullptr), m_process_id(0), m_client_base(0) {}
-    ~c_game() { }
+    c_game() : m_process_handle(nullptr), m_client_base(0), m_process_id(0) {}
+    ~c_game() = default;
 
     [[nodiscard]]
     bool initialize();
 
     [[nodiscard]]
-    const auto& get_client_base() noexcept { return *this->m_client_base; }
+    const auto& get_client_base() const noexcept { return *this->m_client_base; }
 
     template <typename T>
     [[nodiscard]]
     constexpr std::optional<T> read(const uintptr_t& address) const noexcept {
-        T value = { };
+        T value{};
         if (::ReadProcessMemory(this->m_process_handle.get(), reinterpret_cast<const void*>(address), &value, sizeof(T), nullptr))
             return value;
         return std::nullopt;

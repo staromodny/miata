@@ -1,9 +1,12 @@
 #pragma once
+#include <numbers>
+
 #include "../memory/memory.hpp"
+
 #include "offsets.hpp"
 
 struct vec3_t {
-    constexpr vec3_t(const float x = 0.f, const float y = 0.f, const float z = 0.f) : x(x), y(y), z(z) { }
+    explicit constexpr vec3_t(const float x = 0.f, const float y = 0.f, const float z = 0.f) : x(x), y(y), z(z) { }
 
     [[nodiscard]] bool is_zero() const noexcept {
         return (this->x == 0.f && this->y == 0.f && this->z == 0.f);
@@ -13,14 +16,14 @@ struct vec3_t {
 };
 
 struct vec2_t {
-    constexpr vec2_t(const float x = 0.f, const float y = 0.f) : x(x), y(y) { }
+    explicit constexpr vec2_t(const float x = 0.f, const float y = 0.f) : x(x), y(y) { }
 
     [[nodiscard]] bool is_zero() const noexcept {
         return (this->x == 0.f && this->y == 0.f);
     }
 
     [[nodiscard]]
-    vec2_t rotate_point(vec2_t* mid_point, float angle) const noexcept {
+    vec2_t rotate_point(const vec2_t* mid_point, float angle) const noexcept {
         // Convert our angle from degrees to radians.
         angle = static_cast<float>(angle * (std::numbers::pi / 180.f));
 

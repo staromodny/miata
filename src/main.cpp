@@ -4,16 +4,13 @@
 #include <thread>
 #include <mutex>
 
-#include <xmmintrin.h>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
-#include <numbers>
 #include <string>
 #include <map>
 
 #include "valve/player_pawn.hpp"
-
 #include "memory/memory.hpp"
 #include "utils/utils.hpp"
 #include "d3d/device.hpp"
@@ -32,7 +29,7 @@ struct radar_data_t {
     std::mutex radar_points_mutex{};
 };
 
-static void entity_cache_thread(std::stop_source st, c_game* game, player_data_t& players) {
+static void entity_cache_thread(const std::stop_source& st, const c_game* game, player_data_t& players) {
     std::vector<c_cs_player_pawn*> temp_players{};
 
     const auto client_base = game->get_client_base();
@@ -77,7 +74,7 @@ static void entity_cache_thread(std::stop_source st, c_game* game, player_data_t
     }
 }
 
-static void entity_data_thread(std::stop_source st, c_game* game, player_data_t& players, radar_data_t& radar_data) {
+static void entity_data_thread(const std::stop_source& st, c_game* game, player_data_t& players, radar_data_t& radar_data) {
     std::vector<vec2_t> temp_radar_points{};
 
     const auto client_base = game->get_client_base();
@@ -102,16 +99,16 @@ static void entity_data_thread(std::stop_source st, c_game* game, player_data_t&
         radar_center.y = (static_cast<float>(g_config.size_h) / 2);
 
         temp_radar_points.clear();
-        std::unique_lock<std::mutex> lock(players.player_mutex);
-        for (const auto& players : players.player_list) {
-            if (!players || local_pawn == players || local_team == players->m_iTeamNum(game))
+        std::unique_lock<std::mutex> players_lock(players.player_mutex);
+        for (const auto& player : players.player_list) {
+            if (!player || local_pawn == player || local_team == player->m_iTeamNum(game))
                 continue;
 
-            if (players->m_iHealth(game) <= 0)
+            if (player->m_iHealth(game) <= 0)
                 continue;
 
             // Get player radar position.
-            const auto origin = players->m_vOldOrigin(game);
+            const auto origin = player->m_vOldOrigin(game);
             if (origin.is_zero())
                 continue;
 
@@ -137,7 +134,7 @@ static void entity_data_thread(std::stop_source st, c_game* game, player_data_t&
             temp_radar_points.emplace_back(rotated_point);
         }
         {
-            std::unique_lock<std::mutex> lock(radar_data.radar_points_mutex);
+            std::unique_lock<std::mutex> radar_points_lock(radar_data.radar_points_mutex);
             radar_data.radar_points = std::move(temp_radar_points);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -159,15 +156,13 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     }
     case WM_MOUSEMOVE: {
         if (dragging) {
-            POINT p;
+            POINT p{};
             GetCursorPos(&p);
 
-            int newX = p.x - click_pos.x;
-            int newY = p.y - click_pos.y;
+            const auto newX = p.x - click_pos.x;
+            const auto newY = p.y - click_pos.y;
 
-            SetWindowPos(hwnd, nullptr, newX, newY, 0, 0,
-                SWP_NOZORDER | SWP_NOSIZE);
-
+            SetWindowPos(hwnd, nullptr, newX, newY, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
             return 0;
         }
         break;
@@ -180,6 +175,8 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
+    default:
+        break;
     }
 
     return DefWindowProc(hwnd, msg, wParam, lParam);
@@ -219,14 +216,8 @@ static bool parse_config(const std::string& filename, config_map& config) {
 
     return true;
 }
-#include <cmath>
 
-int main()
-{
-    float a = std::fmodf(5.f, 2.f);
-    float b = std::fabsf(-5.f);
-}
-int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_line, int cmd_show) {
+int WINAPI WinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance, [[maybe_unused]] LPSTR lpCmdLine, int nShowCmd) {
     config_map config{};
     const auto success = parse_config("settings.txt", config);
     if (success) {
@@ -266,15 +257,15 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
     if (!game->initialize()) {
         return *show_message_box<wchar_t>(L"Failed to query game info.", L"", buttons::OK | icons::Error);
     }
-    
-    const wchar_t WINDOW_NAME[] = L"Miata(c) staromodny";
-    const wchar_t CLASS_NAME[] = L"SimpleWinClass";
+
+    static constexpr auto WINDOW_NAME = L"Miata(c) staromodny";
+    static constexpr auto CLASS_NAME = L"SimpleWinClass";
 
     WNDCLASS wc = {};
     wc.lpfnWndProc = wnd_proc;
-    wc.hInstance = instance;
+    wc.hInstance = hInstance;
     wc.lpszClassName = CLASS_NAME;
-    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wc.hbrBackground = reinterpret_cast<HBRUSH>((COLOR_WINDOW + 1));
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 
     if (!RegisterClass(&wc)) {
@@ -288,7 +279,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
         WINDOW_NAME,
         WS_POPUP | WS_VISIBLE,
         g_config.pos_x, g_config.pos_y, g_config.size_w, g_config.size_h,
-        nullptr, nullptr, instance, nullptr
+        nullptr, nullptr, hInstance, nullptr
     );
 
     if (!hwnd) {
@@ -302,11 +293,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
     if (g_config.hide_from_recording == 1) {
         if (const auto result = SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE); !result) { // introduced in windows 10 2004
-            utils::show_last_error(L"SetWindowDisplayAffinity"); // not a critical failure.
+            std::ignore = utils::show_last_error(L"SetWindowDisplayAffinity"); // not a critical failure.
         }
     }
 
-    ShowWindow(hwnd, cmd_show);
+    ShowWindow(hwnd, nShowCmd);
     UpdateWindow(hwnd);
 
     // prepare d3d9 state for rendering
@@ -327,7 +318,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
     std::jthread cache_thread(entity_cache_thread, stop_source, game.get(), std::ref(player_data));
     std::jthread data_thread(entity_data_thread, stop_source, game.get(), std::ref(player_data), std::ref(radar_data));
-   
+
+    const auto width = static_cast<float>(g_config.size_w);
+    const auto height = static_cast<float>(g_config.size_h);
+
     while (!stop_source.stop_requested()) {
         MSG msg{};
         while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
@@ -346,20 +340,16 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
                 for (const auto& pt : radar_data.radar_points) {
                     queue->push_filled_rectangle({ pt.x, pt.y }, { 5, 5 }, daisy::color_t(0, 255, 0, 255));
                 }
-                // send_points_to_serial(radar_points,hSerial); leftover. Send list of calculated points to arduino/esp32/any (via COMPORT for example)
-                // and render them on screen. This way you can make an "hardware" radar. :)
 
                 // Vertical center line
-                queue->push_line({ static_cast<float>(g_config.size_w / 2.f), 0.f }, { static_cast<float>(g_config.size_w / 2.f), static_cast<float>(g_config.size_h) }, daisy::color_t(0, 255, 0, 128));
+                queue->push_line({width / 2.f,0.f },{width / 2.f,height},daisy::color_t(0, 255, 0, 128));
+
                 // Horizontal center line
-                queue->push_line({ 0, static_cast<float>(g_config.size_h / 2.f) }, { static_cast<float>(g_config.size_w), static_cast<float>(g_config.size_h / 2.f) }, daisy::color_t(0, 255, 0, 128));
+                queue->push_line({ 0.f, height / 2.f }, { width, height / 2.f }, daisy::color_t(0, 255, 0, 128));
             }
             queue->flush();
             device->end_rendering();
         }
-
-        // 60 fps (vsync btw)
-        //std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     daisy::daisy_shutdown();
