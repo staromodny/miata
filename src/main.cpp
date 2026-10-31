@@ -32,6 +32,7 @@ struct radar_data_t {
 };
 
 static void entity_cache_thread(const std::stop_source& st, const c_game* game, player_data_t& players) {
+    static constexpr auto ENTITY_ENTRY_SIZE = 0x70;
     std::vector<c_cs_player_pawn*> temp_players{};
 
     const auto client_base = game->get_client_base();
@@ -51,7 +52,7 @@ static void entity_cache_thread(const std::stop_source& st, const c_game* game, 
             if (!list_entity_controller)
                 continue;
 
-            const auto entity_controller = game->read<uintptr_t>(list_entity_controller + (112) * (i & 0x1FF)).value_or(0);
+            const auto entity_controller = game->read<uintptr_t>(list_entity_controller + (ENTITY_ENTRY_SIZE) * (i & 0x1FF)).value_or(0);
             if (!entity_controller)
                 continue;
 
@@ -63,7 +64,7 @@ static void entity_cache_thread(const std::stop_source& st, const c_game* game, 
             if (!list_entity)
                 continue;
 
-            const auto entity = game->read<c_cs_player_pawn*>(list_entity + (112) * (entity_controller_pawn & 0x1FF)).value_or(nullptr);
+            const auto entity = game->read<c_cs_player_pawn*>(list_entity + (ENTITY_ENTRY_SIZE) * (entity_controller_pawn & 0x1FF)).value_or(nullptr);
             if (!entity)
                 continue;
 
