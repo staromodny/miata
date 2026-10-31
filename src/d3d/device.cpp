@@ -8,7 +8,7 @@ bool c_d3d_device::initialize(const int& width, const int& height) {
 	// create d3d9 interface
 	m_d3d = Microsoft::WRL::ComPtr<IDirect3D9>(Direct3DCreate9(D3D_SDK_VERSION));
 	if (!m_d3d) {
-		show_message_box<wchar_t>(L"Failed to create D3D9 Interface.", L"", buttons::OK | icons::Error, m_hwnd);
+		show_message_box<char>("Failed to create D3D9 Interface.", "", buttons::OK | icons::Error, m_hwnd);
 		return false;
 	}
 
@@ -41,7 +41,7 @@ bool c_d3d_device::initialize(const int& width, const int& height) {
 	}
 
 	if (FAILED(res)) {
-		show_message_box<wchar_t>(L"Failed to create D3D9 device.", L"", buttons::OK | icons::Error, m_hwnd);
+		show_message_box<char>("Failed to create D3D9 device.", "", buttons::OK | icons::Error, m_hwnd);
 		return false;
 	}
 

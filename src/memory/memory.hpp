@@ -1,9 +1,9 @@
 #pragma once
 #include <Windows.h>
 
-#include <string_view>
 #include <optional>
 #include <memory>
+#include <string>
 
 struct handle_disposer_t {
     using pointer = HANDLE;
@@ -18,7 +18,7 @@ using unique_handle = std::unique_ptr<HANDLE, handle_disposer_t>;
 class c_memory {
 public:
     [[nodiscard]]
-    std::optional<uintptr_t> get_module_by_name(DWORD pid, const std::wstring_view& target_module);
+    std::optional<uintptr_t> get_module_by_name(DWORD pid, const std::string& target_module);
     
     [[nodiscard]]
     std::optional<unique_handle> open_process(DWORD pid, DWORD access_flags);

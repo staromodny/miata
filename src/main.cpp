@@ -11,7 +11,6 @@
 #include <map>
 
 #include "utils/message_box.hpp"
-#include "utils/errors.hpp"
 
 #include "valve/player_pawn.hpp"
 #include "memory/memory.hpp"
@@ -19,6 +18,7 @@
 
 #include "main.hpp"
 
+#include <windower.hpp>
 #include <daisy.hpp>
 
 struct player_data_t {
@@ -231,7 +231,7 @@ int WINAPI WinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance
         g_config.vertical_sync = config["cheat"]["window"]["vsync"];
     }
     else {
-        show_message_box<wchar_t>(L"Failed to parse settings.txt, using default values", L"", buttons::OK | icons::Warning);
+        show_message_box<char>("Failed to parse settings.txt, using default values", "", buttons::OK | icons::Warning);
         g_config.pos_x = 10;
         g_config.pos_y = 200;
         g_config.size_w = 150;
@@ -252,55 +252,54 @@ int WINAPI WinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance
         offsets::m_vOldOrigin = config["offsets"]["client"]["m_vOldOrigin"];
     }
     else {
-        return *show_message_box<wchar_t>(L"Failed to parse offsets.", L"", buttons::OK | icons::Error);
+        return *show_message_box<char>("Failed to parse offsets.", "", buttons::OK | icons::Error);
     }
 
     const auto game = std::make_unique<c_game>();
     if (!game->initialize()) {
-        return *show_message_box<wchar_t>(L"Failed to query game info.", L"", buttons::OK | icons::Error);
+        return *show_message_box<char>("Failed to query game info.", "", buttons::OK | icons::Error);
     }
 
-    static constexpr auto WINDOW_NAME = L"Miata(c) staromodny";
-    static constexpr auto CLASS_NAME = L"SimpleWinClass";
+    const auto window_creation_flags = windower::WindowCreationInfo{
+        .instance = hInstance,
+        .class_name = "SimpleWinClass",
+        .window_name = "Miata(c) staromodny",
+        .wnd_proc = &wnd_proc,
+        .ex_style = WS_EX_TOPMOST,
+        .style = WS_POPUP | WS_VISIBLE,
+        .size = {g_config.size_w, g_config.size_h},
+        .pos = {g_config.pos_x, g_config.pos_y}
+    };
 
-    WNDCLASS wc = {};
-    wc.lpfnWndProc = wnd_proc;
-    wc.hInstance = hInstance;
-    wc.lpszClassName = CLASS_NAME;
-    wc.hbrBackground = reinterpret_cast<HBRUSH>((COLOR_WINDOW + 1));
-    wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-
-    if (!RegisterClass(&wc)) {
-        return show_last_error(L"RegisterClass");
+    WNDCLASSEX wc{};
+    const auto window_creation_res = create_window(wc, window_creation_flags);
+    if (!window_creation_res) {
+        return *show_message_box<char>(window_creation_res.error(), "", buttons::OK | icons::Error);
     }
+    const auto& window = *window_creation_res;
 
-    // Step 2: Create the window
-    const auto hwnd = CreateWindowEx(
-        WS_EX_TOPMOST,
-        CLASS_NAME,
-        WINDOW_NAME,
-        WS_POPUP | WS_VISIBLE,
-        g_config.pos_x, g_config.pos_y, g_config.size_w, g_config.size_h,
-        nullptr, nullptr, hInstance, nullptr
-    );
-
-    if (!hwnd) {
-        return show_last_error(L"CreateWindowEx");
-    }
-
-    const auto device = std::make_unique<c_d3d_device>(hwnd, static_cast<bool>(g_config.vertical_sync));
+    const auto device = std::make_unique<c_d3d_device>(*window, static_cast<bool>(g_config.vertical_sync));
     if (!device->initialize(g_config.size_w, g_config.size_h)) {
         return EXIT_FAILURE;
     }
 
     if (g_config.hide_from_recording == 1) {
-        if (const auto result = SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE); !result) { // introduced in windows 10 2004
-            std::ignore = show_last_error(L"SetWindowDisplayAffinity"); // not a critical failure.
+        const auto hide_window_res = window->exclude_from_capture(TRUE);
+        if (!hide_window_res) {
+            const auto& ec = hide_window_res.error();
+
+            const auto error_message =
+                "Failed to exclude window from capture:\n" +
+                ec.message() +
+                "\nError code: " + std::to_string(ec.value());
+
+            std::ignore = *show_message_box<char>(error_message, "", buttons::OK | icons::Error);
         }
     }
 
-    ShowWindow(hwnd, nShowCmd);
-    UpdateWindow(hwnd);
+    if (!window->show(nShowCmd)) {
+        return *show_message_box<char>("Failed to show window.", "", buttons::OK | icons::Error);
+    }
 
     // prepare d3d9 state for rendering
     // if daisy is the only thing you plan on rendering with, you can only do this once *safely*
@@ -310,7 +309,7 @@ int WINAPI WinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance
 
     const auto queue = std::make_unique<daisy::c_renderqueue>();
     if (!queue->create(64, 128)) {
-        return *show_message_box<wchar_t>(L"Failed to create buffer queue", L"", buttons::OK | icons::Error);
+        return *show_message_box<char>("Failed to create buffer queue", "", buttons::OK | icons::Error);
     }
 
     std::stop_source stop_source{};
@@ -332,7 +331,7 @@ int WINAPI WinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance
             if (msg.message == WM_QUIT)
                 stop_source.request_stop();
         }
-        if (!FindWindow(L"SDL_app", L"Counter-Strike 2") || GetAsyncKeyState(VK_DELETE) & 1)
+        if (!FindWindow("SDL_app", "Counter-Strike 2") || GetAsyncKeyState(VK_DELETE) & 1)
             stop_source.request_stop();
 
         if (device->begin_rendering()) {
@@ -356,7 +355,7 @@ int WINAPI WinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance
 
     daisy::daisy_shutdown();
 
-    ::DestroyWindow(hwnd);
+    std::ignore = window->destroy();
     ::UnregisterClass(wc.lpszClassName, wc.hInstance);
     return EXIT_SUCCESS;
 }
