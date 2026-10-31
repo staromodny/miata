@@ -98,8 +98,8 @@ static void entity_data_thread(const std::stop_source& st, c_game* game, player_
         const auto local_team = local_pawn->m_iTeamNum(game);
 
         vec2_t radar_center{};
-        radar_center.x = (static_cast<float>(g_config.size_w) / 2);
-        radar_center.y = (static_cast<float>(g_config.size_h) / 2);
+        radar_center.x = (static_cast<float>(g_config.size_w) / 2.f);
+        radar_center.y = (static_cast<float>(g_config.size_h) / 2.f);
 
         temp_radar_points.clear();
         std::unique_lock<std::mutex> players_lock(players.player_mutex);
@@ -116,8 +116,8 @@ static void entity_data_thread(const std::stop_source& st, c_game* game, player_
                 continue;
 
             vec2_t screen_pos{};
-            screen_pos.x = (local_pos.x - origin.x) / 15; //scale. 
-            screen_pos.y = (local_pos.y - origin.y) / 15;
+            screen_pos.x = (local_pos.x - origin.x) / 15.f; //scale.
+            screen_pos.y = (local_pos.y - origin.y) / 15.f;
 
             // Prevent inverted x axis position.
             screen_pos.x *= -1;
