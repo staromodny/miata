@@ -1,5 +1,6 @@
 # Miata
-[![C++](https://img.shields.io/badge/language-C%2B%2B-%23f34b7d.svg?style=plastic)](https://en.wikipedia.org/wiki/C%2B%2B) 
+[![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
+[![License](https://img.shields.io/github/license/staromodny/windower)](https://github.com/staromodny/windower/blob/master/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/v3ctra/miata?color=green)](https://github.com/v3ctra/miata/issues)
 
 Free and open-source radar-hack software for Counter-Strike 2.
