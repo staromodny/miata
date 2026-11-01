@@ -15,16 +15,7 @@ struct handle_disposer_t {
 };
 using unique_handle = std::unique_ptr<HANDLE, handle_disposer_t>;
 
-class c_memory {
-public:
-    [[nodiscard]]
-    std::optional<uintptr_t> get_module_by_name(DWORD pid, const std::string& target_module);
-    
-    [[nodiscard]]
-    std::optional<unique_handle> open_process(DWORD pid, DWORD access_flags);
-};
-
-class c_game : public c_memory {
+class c_game {
 public:
     c_game() : m_process_handle(nullptr), m_client_base(0), m_process_id(0) {}
     ~c_game() = default;
