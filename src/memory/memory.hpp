@@ -28,7 +28,7 @@ public:
 
     template <typename T>
     [[nodiscard]]
-    constexpr std::optional<T> read(const uintptr_t& address) const noexcept {
+    std::optional<T> read(const uintptr_t& address) const noexcept {
         T value{};
         if (::ReadProcessMemory(this->m_process_handle.get(), reinterpret_cast<const void*>(address), &value, sizeof(T), nullptr))
             return value;

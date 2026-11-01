@@ -24,6 +24,12 @@
 struct player_data_t {
     std::vector<c_cs_player_pawn*> player_list{};
     std::mutex player_mutex{};
+
+    [[nodiscard]]
+    std::vector<c_cs_player_pawn*> get_players() {
+        std::lock_guard lock(player_mutex);
+        return player_list;
+    }
 };
 
 struct radar_data_t {
@@ -72,7 +78,7 @@ static void entity_cache_thread(const std::stop_source& st, const c_game* game, 
         }
         {
             std::unique_lock<std::mutex> lock(players.player_mutex);
-            players.player_list = std::move(temp_players);
+            std::swap(players.player_list, temp_players);
         }
     }
 }
@@ -86,32 +92,64 @@ static void entity_data_thread(const std::stop_source& st, c_game* game, player_
 
     while (!st.stop_requested()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        vec3_t viewangles = game->read<vec3_t>(client_base + offsets::dwViewAngles).value();
-		if (viewangles.is_zero()) // probably not even in the game
-			continue;
+        const auto maybe_viewangles = game->read<vec3_t>(client_base + offsets::dwViewAngles);
+		if (!maybe_viewangles)
+		    continue;
 
-        const auto local_pawn = game->read<c_cs_player_pawn*>(client_base + offsets::dwLocalPlayerPawn).value_or(nullptr);
+        const auto& viewangles = *maybe_viewangles;
+        if (viewangles.is_zero())
+            continue;
+
+        const auto maybe_local_pawn = game->read<c_cs_player_pawn*>(client_base + offsets::dwLocalPlayerPawn);
+        if (!maybe_local_pawn)
+            continue;
+
+        const auto& local_pawn = *maybe_local_pawn;
         if (!local_pawn)
             continue;
 
-        const auto local_pos = local_pawn->m_vOldOrigin(game);
-        const auto local_team = local_pawn->m_iTeamNum(game);
+        const auto maybe_local_pos = local_pawn->m_vOldOrigin(game);
+        if (!maybe_local_pos)
+            continue;
+
+        const auto& local_pos = *maybe_local_pos;
+
+        const auto maybe_local_team = local_pawn->m_iTeamNum(game);
+        if (!maybe_local_team)
+            continue;
+        const auto& local_team = *maybe_local_team;
 
         vec2_t radar_center{};
         radar_center.x = (static_cast<float>(g_config.size_w) / 2.f);
         radar_center.y = (static_cast<float>(g_config.size_h) / 2.f);
 
         temp_radar_points.clear();
-        std::unique_lock<std::mutex> players_lock(players.player_mutex);
-        for (const auto& player : players.player_list) {
-            if (!player || local_pawn == player || local_team == player->m_iTeamNum(game))
+        for (const auto& player : players.get_players()) {
+            if (!player || local_pawn == player)
                 continue;
 
-            if (player->m_iHealth(game) <= 0)
+            const auto maybe_player_team = player->m_iTeamNum(game);
+            if (!maybe_player_team)
+                continue;
+
+            const auto& player_team = *maybe_player_team;
+            if (local_team == player_team)
+                continue;
+
+            const auto maybe_player_health = player->m_iHealth(game);
+            if (!maybe_player_health)
+                continue;
+
+            const auto& player_health = *maybe_player_health;
+            if (player_health <= 0)
                 continue;
 
             // Get player radar position.
-            const auto origin = player->m_vOldOrigin(game);
+            const auto maybe_origin = player->m_vOldOrigin(game);
+            if (!maybe_origin)
+                continue;
+
+            const auto& origin = *maybe_origin;
             if (origin.is_zero())
                 continue;
 
@@ -138,9 +176,8 @@ static void entity_data_thread(const std::stop_source& st, c_game* game, player_
         }
         {
             std::unique_lock<std::mutex> radar_points_lock(radar_data.radar_points_mutex);
-            radar_data.radar_points = std::move(temp_radar_points);
+            std::swap(radar_data.radar_points, temp_radar_points);
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 

@@ -50,15 +50,15 @@ struct vec2_t {
 class c_cs_player_pawn {
 public:
     [[nodiscard]]
-    int m_iHealth(c_game* game) const noexcept {
-        return *game->read<int>(reinterpret_cast<uintptr_t>(this) + offsets::m_iHealth);
+    std::optional<int> m_iHealth(c_game* game) const noexcept {
+        return game->read<int>(reinterpret_cast<uintptr_t>(this) + offsets::m_iHealth);
     }
     [[nodiscard]]
-    int m_iTeamNum(c_game* game) const noexcept {
-        return *game->read<int>(reinterpret_cast<uintptr_t>(this) + offsets::m_iTeamNum);
+    std::optional<int> m_iTeamNum(c_game* game) const noexcept {
+        return game->read<int>(reinterpret_cast<uintptr_t>(this) + offsets::m_iTeamNum);
     }
     [[nodiscard]]
-    vec3_t m_vOldOrigin(c_game* game) const noexcept {
-        return *game->read<vec3_t>(reinterpret_cast<uintptr_t>(this) + offsets::m_vOldOrigin);
+    std::optional<vec3_t> m_vOldOrigin(c_game* game) const noexcept {
+        return game->read<vec3_t>(reinterpret_cast<uintptr_t>(this) + offsets::m_vOldOrigin);
     }
 };
