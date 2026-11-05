@@ -1,7 +1,7 @@
 # Miata
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
+[![GitHub issues](https://img.shields.io/github/issues/staromodny/miata?color=blue)](https://github.com/staromodny/miata/issues)
 [![License](https://img.shields.io/github/license/staromodny/windower)](https://github.com/staromodny/windower/blob/master/LICENSE)
-[![GitHub issues](https://img.shields.io/github/issues/staromodny/miata?color=green)](https://github.com/staromodny/miata/issues)
 
 Free and open-source radar-hack software for Counter-Strike 2.
 
@@ -28,7 +28,7 @@ Free and open-source radar-hack software for Counter-Strike 2.
    ```
 
 ## Example Config
-If config.txt doesn't exist - cheat will use default values, defined in entrypoint.
+If `config.txt` doesn't exist - cheat will use default values, defined in entrypoint.
 ```
 radar.pos.x=5        # x position of radar on the screen
 radar.pos.y=5        # y position of radar on the screen
@@ -39,7 +39,7 @@ cheat.window.vsync=0 # Determines if window should have vertical sync enabled
 ```
 
 ## Updating
-Cheat will perform an attempt to read file called "offsets.txt". The contents of the file should look like:
+Cheat will perform an attempt to read file called `offsets.txt`. The contents of the file should look like:
 ```
 offsets.client.dwLocalPlayerPawn=29302688
 offsets.client.dwEntityList=30500696
