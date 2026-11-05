@@ -1,19 +1,31 @@
 # Miata
 [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 [![License](https://img.shields.io/github/license/staromodny/windower)](https://github.com/staromodny/windower/blob/master/LICENSE)
-[![GitHub issues](https://img.shields.io/github/issues/v3ctra/miata?color=green)](https://github.com/v3ctra/miata/issues)
+[![GitHub issues](https://img.shields.io/github/issues/staromodny/miata?color=green)](https://github.com/staromodny/miata/issues)
 
 Free and open-source radar-hack software for Counter-Strike 2.
 
 ## Compiling
 
 ### Prerequisites
+- [CMake 3.25](https://cmake.org/cmake/help/latest/release/3.25.html) or newer
+- MSVC compiler
+- Windows SDK
 
-* **Microsoft Visual Studio 2022** with **Desktop development with C++** workload
-
-### Compiling from source
-
-Open **miata.sln** in Visual Studio 2022, set build configuration to **Release | x64**. Press *Build solution* and you should receive **miata.exe** file.
+### Building
+1. Clone the repository:
+   ```
+   git clone https://github.com/v3ctra/miata.git
+   cd miata
+   ```
+2. Configure the project:
+   ```
+   cmake -S . -B build -A x64
+   ```
+3. Build the project:
+   ```
+   cmake --build build --config Release
+   ```
 
 ## Example Config
 If config.txt doesn't exist - cheat will use default values, defined in entrypoint.
@@ -37,10 +49,7 @@ offsets.client.m_iHealth=844
 offsets.client.m_iTeamNum=1003
 offsets.client.m_vOldOrigin=5560
 ```
-Updated offsets can be found [HERE](https://github.com/a2x/cs2-dumper/blob/main/output/offsets.json). and [HERE](https://github.com/a2x/cs2-dumper/blob/main/output/client_dll.json).
+Always up to date offsets can be found [HERE](https://github.com/a2x/cs2-dumper/blob/main/output/offsets.json). and [HERE](https://github.com/a2x/cs2-dumper/blob/main/output/client_dll.json).
 
 ## Contribution
 Contributions via Pull Requests are welcome :)
-
-## Community
-Join the community... https://t.me/precache
